@@ -1,3 +1,4 @@
+
 module Lessons.Lesson07 () where
 
 -- >>> cp
@@ -104,7 +105,6 @@ em''' = do
     b <- Left "omg"
     Right a
 
-
 -- >>> c == (Just 1 >>= (\z -> return (z + 1)) >>= (\x -> return (x, 'a')))
 -- True
 c :: Maybe (Int, Char)
@@ -152,3 +152,4 @@ addMaybies a b = (+) <$> a <*> b
 -- Just 5
 addMaybies' :: Maybe Int -> Maybe Int -> Maybe Int -> Maybe Int
 addMaybies' a b c = (\x y z -> x + y + z) <$> a <*> b <*> c
+
