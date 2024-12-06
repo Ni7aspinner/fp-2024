@@ -12,3 +12,8 @@
 ### Delete 1
 ### Add Tuesday 3x9 squats, Superset[3x9 bench-press, 14x10 dead-lift], 12x32 push-ups
 ### Merge 1 2
+
+### Added Commands "Save" "Load"
+### The main problem was rendering merged plans, but it is done
+### Lib2 mostly unchanged
+

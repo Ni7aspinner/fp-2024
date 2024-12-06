@@ -2,6 +2,11 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use infix" #-}
 {-# HLINT ignore "Unused LANGUAGE pragma" #-}
+{-# OPTIONS_GHC -Wno-type-defaults #-}
+{-# OPTIONS_GHC -Wno-unused-local-binds #-}
+{-# HLINT ignore "Use zipWith" #-}
+{-# HLINT ignore "Use uncurry" #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 module Lib3
     ( stateTransition,
     StorageOp (..),
@@ -9,7 +14,9 @@ module Lib3
     parseCommand,
     parseStatements,
     marshallState,
-    renderStatements
+    renderStatements,
+    Statements(..),
+    Command(..)
     ) where
 
 import Control.Concurrent ( Chan, readChan, writeChan, newChan )
