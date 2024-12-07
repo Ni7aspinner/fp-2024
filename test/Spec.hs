@@ -55,8 +55,9 @@ propertyTests = testGroup "Property tests"
             parsedStr = case parsed of
                             Left err -> "Error: " ++ err
                             Right q  -> "Parsed Query: " ++ show q
-        in trace ("Generated Query: " ++ show query) $
-           trace parsedStr $
+        in trace parsedStr $
+        trace ("Generated Query: " ++ show query) $
+           
            Lib2.parseQuery rendered == Right query
   ]
 

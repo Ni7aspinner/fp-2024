@@ -111,14 +111,14 @@ renderQuery Lib2.List _ =
 
 renderPlan :: Lib2.Plan -> Int -> String
 renderPlan (Lib2.WeekDay days) i =
-    unlines $ map renderTuple (zip [1..] days)
+    concatMap renderTuple (zip [1..] days)
   where
     renderTuple (idx, (day, routine)) =
         if idx == 1
-            then "Add " ++ day ++ " " ++ renderRoutine routine 
+            then "Add " ++ day ++ " " ++ renderRoutine routine
         else
             "Add " ++ day ++ " " ++ renderRoutine routine ++ "\n"
-            ++ "Merge " ++ show i ++ " " ++ show (i+1) 
+            ++ "Merge " ++ show i ++ " " ++ show (i+1)
 
 renderRoutine :: Lib2.Routine -> String
 renderRoutine (Lib2.Routine exercises) =
