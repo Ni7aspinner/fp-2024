@@ -60,7 +60,7 @@ instance Show Plan where
     show :: Plan -> String
     show (WeekDay days) = 
         let planStrs = map (\(day, routine) -> day ++ ": " ++ show routine) days
-        in L.intercalate ";\n   " planStrs ++ ";"
+        in L.intercalate ";\n   " planStrs 
 
 instance Show Routine where
     show :: Routine -> String

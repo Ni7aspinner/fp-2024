@@ -1,33 +1,62 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use <$>" #-}
 import Test.Tasty ( TestTree, defaultMain, testGroup )
-import Test.Tasty.HUnit ( testCase, (@?=) )
 import Test.Tasty.QuickCheck as QC
 
-import Data.List
-import Data.Ord
-
-import Lib1 qualified
 import Lib2 qualified
+import Lib3
+import Debug.Trace
 
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Tests" [unitTests, propertyTests]
+tests = testGroup "Tests" [propertyTests]
 
-unitTests :: TestTree
-unitTests = testGroup "Lib1 tests"
-  [ testCase "List of completions is not empty" $
-      null Lib1.completions @?= False,
-    testCase "Parsing case 1 - give a better name" $
-      Lib2.parseQuery "" @?= (Left "Some error message"),
-    testCase "Parsing case 2 - give a better name" $
-      Lib2.parseQuery "o" @?= (Left "Some error message")
-  ]
+instance Arbitrary Lib2.Query where
+    arbitrary = oneof
+        [ return Lib2.List
+        , Lib2.Add <$> arbitrary
+        ]
+
+instance Arbitrary Lib2.Plan where
+    arbitrary = do
+        days <- elements ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        numRoutines <- choose (1,1) 
+        routines <- vectorOf numRoutines arbitrary  
+        let dayRoutines = map (\routine -> (days, routine)) routines 
+        return $ Lib2.WeekDay dayRoutines
+
+instance Arbitrary Lib2.Routine where
+    arbitrary = Lib2.Routine <$> listOf1 arbitrary
+
+instance Arbitrary Lib2.Exercise where
+    arbitrary = do
+        name <- listOf1 $ elements ['a'..'z'] 
+        sor <- arbitrary  
+        return $ Lib2.Exercise sor name
+        
+instance Arbitrary Lib2.SOR where
+    arbitrary = do
+        sets <- (choose (1, 10) :: Gen Int)  
+        reps <- (choose (1, 10) :: Gen Int) 
+        name <- arbitrary           
+        return $ Lib2.SOR (show sets) (show reps) name
 
 propertyTests :: TestTree
-propertyTests = testGroup "some meaningful name"
-  [
-    QC.testProperty "sort == sort . reverse" $
-      \list -> sort (list :: [Int]) == sort (reverse list)
+propertyTests = testGroup "Property tests"
+  [ 
+      QC.testProperty "parseQuery . renderQuery == Right query" $
+      \query ->
+        let rendered = renderQuery query 1
+            parsed = Lib2.parseQuery rendered
+            parsedStr = case parsed of
+                            Left err -> "Error: " ++ err
+                            Right q  -> "Parsed Query: " ++ show q
+        in trace ("Generated Query: " ++ show query) $
+           trace parsedStr $
+           Lib2.parseQuery rendered == Right query
   ]
+
