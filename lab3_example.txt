@@ -1,18 +1,66 @@
-:paste
-
-BEGIN
-Add Monday 2x3 squats, 2x3 squats
-Add Tuesday 2x3 squats, 2x3 squats
+Welcome! Press [TAB] for auto completion, type ':paste' for multiline input
+>>> :paste
+-- Entering multi-line mode. Press <Ctrl-D> to finish.
+| BEGIN
+| Add Monday 2x3 squats, 2x3 squats
+y 2x3 squats, 2x3 squats
 Merge 1 2
-Add Friday 2x3 squats, 2x3 squats
+Add Friday 2x3 | Add Tuesday 2x3 squats, 2x3 squats
+| Merge 1 2
+squats, 2x3 squats
 Merge 1 2
-Add Saturday 2x3 squats, 2x3 squats
-Add Sunday 2x3 squats, 2x3 squats
-Add Thursday 2x3 squats, 2x3 squats
-Merge 3 4
-END
+Add Saturday 2x3 squa| Add Friday 2x3 squats, 2x3 squats
+| Merge 1 2
+| Add Saturday 2x3 squats, 2x3 squats
+| Add Sunday 2x3 squats, 2x3 squats
+| Add Thursday 2x3 squats, 2x3 squats
+| Merge 3 4
+| END
+| 
+Statements executed successfully.
+>>> List
+Created Plans:
+1. Monday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Tuesday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Friday: 2x3 repetitions of squats, 2x3 repetitions of squats
+2. Saturday: 2x3 repetitions of squats, 2x3 repetitions of squats
+3. Sunday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Thursday: 2x3 repetitions of squats, 2x3 repetitions of squats
 
-List
-Save
-//stack-run fp2024-three arba Delete 3; Delete 2; Delete 1
-Load
+>>> Save
+Created Plans:
+1. Monday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Tuesday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Friday: 2x3 repetitions of squats, 2x3 repetitions of squats
+2. Saturday: 2x3 repetitions of squats, 2x3 repetitions of squats
+3. Sunday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Thursday: 2x3 repetitions of squats, 2x3 repetitions of squats
+
+>>> Delete 3
+Statement executed successfully.
+>>> Delete 2
+Statement executed successfully.
+>>> Delete 1
+Statement executed successfully.
+>>> List
+Created Plans:
+
+>>> Load
+Created Plans:
+1. Monday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Tuesday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Friday: 2x3 repetitions of squats, 2x3 repetitions of squats
+2. Saturday: 2x3 repetitions of squats, 2x3 repetitions of squats
+3. Sunday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Thursday: 2x3 repetitions of squats, 2x3 repetitions of squats
+
+>>> List
+Created Plans:
+1. Monday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Tuesday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Friday: 2x3 repetitions of squats, 2x3 repetitions of squats
+2. Saturday: 2x3 repetitions of squats, 2x3 repetitions of squats
+3. Sunday: 2x3 repetitions of squats, 2x3 repetitions of squats;
+   Thursday: 2x3 repetitions of squats, 2x3 repetitions of squats
+
+>>> 

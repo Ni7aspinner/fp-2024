@@ -8,12 +8,19 @@ import Test.Tasty.QuickCheck as QC
 import Lib2 qualified
 import Lib3
 import Debug.Trace
+import qualified Lib2 as Lib3
+import qualified Lib3 as Lib2
 
 main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
 tests = testGroup "Tests" [propertyTests]
+
+instance Arbitrary Lib3.Statements where
+    arbitrary = 
+         Lib3.Batch <$> arbitrary
+        
 
 instance Arbitrary Lib2.Query where
     arbitrary = oneof
@@ -47,17 +54,8 @@ instance Arbitrary Lib2.SOR where
 
 propertyTests :: TestTree
 propertyTests = testGroup "Property tests"
-  [ 
-      QC.testProperty "parseQuery . renderQuery == Right query" $
-      \query ->
-        let rendered = renderQuery query 1
-            parsed = Lib2.parseQuery rendered
-            parsedStr = case parsed of
-                            Left err -> "Error: " ++ err
-                            Right q  -> "Parsed Query: " ++ show q
-        in trace parsedStr $
-        trace ("Generated Query: " ++ show query) $
-           
-           Lib2.parseQuery rendered == Right query
+  [ QC.testProperty "parseStatements . renderStatements == Right statements" $ \statements ->
+      Lib3.parseStatements (Lib3.renderStatements statements) == Right (statements,"")
   ]
 
+      

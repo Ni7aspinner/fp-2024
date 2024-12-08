@@ -93,7 +93,7 @@ marshallState finalState =
 
 renderStatements :: Statements -> String
 renderStatements (Batch queries) =
-  "BEGIN\n" ++ unlines (map (\(query, i) -> renderQuery query i) (zip queries [1..]))  ++ "END"
+  "BEGIN\n" ++ unlines (map (\(query, i) -> renderQuery query i) (zip queries [1..]))  ++ "\nEND"
 
 renderStatements (Single query) =
   "BEGIN\n" ++ renderQuery query 1 ++ "END"
@@ -105,9 +105,9 @@ renderQuery(Lib2.Add plan) i=
 renderQuery(Lib2.Delete idx) _ =
   "Delete " ++ show idx
 renderQuery(Lib2.Merge idx1 idx2) _ = 
-  "Merge " ++ show idx1 ++ " " ++  show idx2
+  "Merge " ++ show idx1 ++ " " ++  show idx2 ++ "\n"
 renderQuery Lib2.List _ =
-  "List"
+  "List\n"
 
 renderPlan :: Lib2.Plan -> Int -> String
 renderPlan (Lib2.WeekDay days) i =
@@ -115,10 +115,10 @@ renderPlan (Lib2.WeekDay days) i =
   where
     renderTuple (idx, (day, routine)) =
         if idx == 1
-            then "Add " ++ day ++ " " ++ renderRoutine routine
+            then "Add " ++ day ++ " " ++ renderRoutine routine ++ "\n"
         else
             "Add " ++ day ++ " " ++ renderRoutine routine ++ "\n"
-            ++ "Merge " ++ show i ++ " " ++ show (i+1)
+            ++ "Merge " ++ show i ++ " " ++ show (i+1)++"\n"
 
 renderRoutine :: Lib2.Routine -> String
 renderRoutine (Lib2.Routine exercises) =
