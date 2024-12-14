@@ -6,6 +6,8 @@
 {-# HLINT ignore "Redundant lambda" #-}
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 {-# OPTIONS_GHC -Wno-type-defaults #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Lib2
     ( 
@@ -20,6 +22,10 @@ module Lib2
       stateTransition
     ) where
 
+import qualified Control.Monad.Trans.State.Strict as T
+import Control.Monad.Trans.Except (ExceptT(..), throwE, runExceptT)
+import Control.Monad.Trans.Class(lift)
+import Control.Monad.IO.Class(liftIO)
 import qualified Data.Char as C
 import qualified Data.List as L
 import Text.Read (readMaybe)
@@ -47,7 +53,8 @@ data Exercise = Exercise SOR String | SuperSet Routine
 -- <sor> ::= <digits> "x" <digits> "repetitions of "
 data SOR = SOR String String Char
 
-type Parser a = String -> Either String (a, String)
+type Parser a = ExceptT String (T.State String) a
+
 
 instance Show Query where
     show :: Query -> String
@@ -60,7 +67,7 @@ instance Show Plan where
     show :: Plan -> String
     show (WeekDay days) = 
         let planStrs = map (\(day, routine) -> day ++ ": " ++ show routine) days
-        in L.intercalate ";\n   " planStrs 
+        in L.intercalate ";\n   " planStrs ++ ";"
 
 instance Show Routine where
     show :: Routine -> String
@@ -84,115 +91,142 @@ instance Show State where
         listPlans = unlines . zipWith (\i plan -> show i ++ ". " ++ show plan) [1..]
 
 parseQuery :: String -> Either String Query
-parseQuery input = fmap fst (orElse parseList (orElse parseMerge parseOrder) input)
-  where
-    parseList :: Parser Query
-    parseList input' =
-        case removeSpaces input' of
-            'L':'i':'s':'t':rest -> Right (List, rest)
-            _ -> Left "Expected 'List'"
+parseQuery input = 
+    case T.evalState (runExceptT (parseList `orElse` parseMerge `orElse` parseOrder)) input of
+        Left err   -> Left err
+        Right query -> Right query
 
-    parseOrder :: Parser Query
-    parseOrder input' =
-        case removeSpaces input' of
-            'A':'d':'d':' ':rest ->
-                let (planStr, remaining) = break (== ';') rest
-                in case parsePlan planStr of
-                    Right (plan, _) -> Right (Add plan, drop 1 remaining)
-                    Left err -> Left err
-            'D':'e':'l':'e':'t':'e':' ':rest ->
-                case readMaybe (takeWhile C.isDigit rest) of
-                    Just idx -> Right (Delete idx, dropWhile C.isDigit rest)
-                    Nothing -> Left "Invalid index for Delete"
-            _ -> Left "Expected 'Add <plan>' or 'Delete <number>'"
+parseList :: Parser Query
+parseList = do
+    input <- lift T.get
+    case removeSpaces input of
+        'L':'i':'s':'t':rest -> do
+            lift $ T.put rest
+            return List
+        _ -> throwE "Expected 'List'"
 
-    parseMerge :: Parser Query
-    parseMerge input' =
-        case removeSpaces input' of
-            'M':'e':'r':'g':'e':' ':rest ->
-                let (idx1Str, rest') = span C.isDigit rest
-                    (idx2Str, rest'') = span C.isDigit (removeSpaces rest')
-                in case (readMaybe idx1Str, readMaybe idx2Str) of
-                    (Just idx1, Just idx2) -> Right (Merge idx1 idx2, rest'')
-                    _ -> Left "Invalid indices for Merge"
-            _ -> Left "Expected 'Merge <index1> <index2>'"
+parseOrder :: Parser Query
+parseOrder = do
+    input <- lift T.get
+    case removeSpaces input of
+        'A':'d':'d':' ':rest -> do
+            let (planStr, remaining) = break (== ';') rest
+            lift $ T.put planStr
+            result <- lift $ runExceptT parsePlan 
+            case result of
+                Right plan -> do
+                    lift $ T.put (drop 1 remaining)
+                    return (Add plan)
+                Left err -> throwE err
+
+        'D':'e':'l':'e':'t':'e':' ':rest -> do
+            let idxStr = takeWhile C.isDigit rest
+            case readMaybe idxStr of
+                Just idx -> do
+                    lift $ T.put (dropWhile C.isDigit rest)
+                    return (Delete idx)
+                Nothing -> throwE "Invalid index for Delete"
+        _ -> throwE "Expected 'Add <plan>' or 'Delete <number>'"
+
+parseMerge :: Parser Query
+parseMerge = do
+    input <- lift T.get
+    case removeSpaces input of
+        'M':'e':'r':'g':'e':' ':rest -> do
+            let (idx1Str, rest') = span C.isDigit rest
+                (idx2Str, rest'') = span C.isDigit (removeSpaces rest')
+            case (readMaybe idx1Str, readMaybe idx2Str) of
+                (Just idx1, Just idx2) -> do
+                    lift $ T.put rest''
+                    return (Merge idx1 idx2)
+                _ -> throwE "Invalid indices for Merge"
+        _ -> throwE "Expected 'Merge <index1> <index2>'"
 
 parsePlan :: Parser Plan
-parsePlan input =
+parsePlan =
     let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    in parseWeekDay days input
-  where
-    parseWeekDay :: [String] -> Parser Plan
-    parseWeekDay [] _ = Left "No valid weekday found"
-    parseWeekDay (day:rest) input' =
-        if day `L.isPrefixOf` input'
-        then let remaining = drop (length day) input' 
-             in case removeSpaces remaining of 
-                  _ -> case parseRoutine (removeSpaces remaining) of 
-                         Right (routine, rest') -> Right (WeekDay [(day, routine)], rest')
-                         Left err -> Left err
-        else parseWeekDay rest input'
+    in parseWeekDay days
+    
+parseWeekDay :: [String] -> Parser Plan
+parseWeekDay [] = throwE "No valid weekday found"
+parseWeekDay (day:rest) = do
+    input' <- lift T.get
+    if day `L.isPrefixOf` input'
+    then do
+        let remaining = drop (length day) input'
+        lift $ T.put remaining
+        routineResult <- lift $ runExceptT parseRoutine
+        case routineResult of
+            Right routine -> do
+                return $ WeekDay [(day, routine)]  
+            Left err -> throwE err
+    else parseWeekDay rest
 
 parseRoutine :: Parser Routine
-parseRoutine input = 
-    fmap (\(exercises, rest) -> (Routine exercises, rest)) (parseExercises input)
-    where
-    parseExercises :: Parser [Exercise]
-    parseExercises =
-        and3' combine parseExercise parseCommaOrEnd parseOptionalExercises
+parseRoutine  = do
+    input <- lift T.get
+    let parseExercises :: String -> Parser ([Exercise], String)
+        parseExercises input' = do
+            (exercise, rest1) <- parseExercise input'  
+            let restTrimmed = removeSpaces rest1
+            case parseCommaOrEnd restTrimmed of
+                Right (Just ',', rest2) -> do
+                    (moreExercises, restFinal) <- parseExercises rest2
+                    return (exercise : moreExercises, restFinal)
+                Right (Nothing, restFinal) ->
+                    return ([exercise], restFinal)
+                Left err -> throwE err
 
-    combine :: Exercise -> Maybe Char -> Maybe [Exercise] -> [Exercise]
-    combine exercise _ Nothing = [exercise]
-    combine exercise _ (Just moreExercises) = exercise : moreExercises
+    (exercises, _) <- parseExercises input
+    return (Routine exercises)
 
-    parseCommaOrEnd :: Parser (Maybe Char)
-    parseCommaOrEnd input' =
-        case removeSpaces input' of
-            ',':' ':rest -> Right (Just ',', rest)
-            _            -> Right (Nothing, input')
+parseCommaOrEnd :: String -> Either String (Maybe Char, String)
+parseCommaOrEnd input' =
+    case removeSpaces input' of
+        ',':' ':rest -> Right (Just ',', rest)
+        _            -> Right (Nothing, input')
 
-    parseOptionalExercises :: Parser (Maybe [Exercise])
-    parseOptionalExercises input' =
-        case parseExercises input' of
-            Right (exercises, rest) -> Right (Just exercises, rest)
-            Left _                  -> Right (Nothing, input')
-
-
-parseExercise :: Parser Exercise
+parseExercise :: String -> Parser (Exercise, String)
 parseExercise input =
-    case parseSOR input of
-        Right (sor, rest) -> 
-            case span (/= ',') (removeSpaces rest) of
-                (name, rest') -> Right (Exercise sor name, rest')
-                _ -> Left "Expected exercise name after SOR"
-        Left err -> 
-            if "Superset[" `L.isPrefixOf` input  
-            then let inner = drop (length "Superset[") input  
-                     inner' = takeWhile (/= ']') inner      
-                     rest' = drop (length inner') inner    
-                 in case parseRoutine inner' of          
-                      Right (routine, rest) -> 
-                          if "]" `L.isPrefixOf` rest'      
-                          then Right (SuperSet routine, drop 1 rest')  
-                          else Left $ "Expected ']' to close Superset |" ++ inner'  
-                      Left err' -> Left err'  
-            else Left err  
+    case parseSOR (removeSpaces input) of
+        Right (sor, rest) ->
+            let (name, rest') = span (/= ',') (removeSpaces rest)
+            in if null name
+                then throwE "Expected exercise name after SOR"
+                else return (Exercise sor name, rest')
+        Left err ->
+            if "Superset[" `L.isPrefixOf` input
+            then
+                let inner = drop (length "Superset[") input
+                    inner' = takeWhile (/= ']') inner
+                    rest' = drop (length inner') inner
+                in do
+                    lift $ T.put inner'
+                    routine <- parseRoutine 
+                    if "]" `L.isPrefixOf` rest'
+                        then return (SuperSet routine, drop 1 rest') 
+                        else throwE "Expected ']' to close Superset"
+            else throwE err
 
-parseSOR :: Parser SOR
+parseSOR :: String -> Either String (SOR, String)
 parseSOR input =
     let (sets, rest1) = span C.isDigit input
-        rest2 = dropWhile C.isLetter rest1
+        rest2 = dropWhile (`elem` "xX") rest1 
         (reps, rest3) = span C.isDigit rest2
     in if null sets || null reps
-       then Left $"Invalid SOR format 1." ++ sets ++ " 2." ++ reps ++ " 3." ++ rest1 
+       then Left $ "Invalid SOR format: Expected format <sets>x<reps>, but got '" ++ input ++ "'"
        else Right (SOR sets reps 'x', removeSpaces rest3)
 
 orElse :: Parser a -> Parser a -> Parser a
-orElse p1 p2 input =
-    case p1 input of
-        Right res -> Right res
-        Left _ -> p2 input
-        
+orElse p1 p2 = ExceptT $ do
+    state <- T.get
+    result <- runExceptT p1
+    case result of
+        Right res -> return(Right res)
+        Left _ -> do
+            T.put state 
+            runExceptT p2
+{-        
 and3' :: (a -> b -> c -> d) -> Parser a -> Parser b -> Parser c -> Parser d
 and3' f a b c = \input ->
     case a input of
@@ -204,6 +238,7 @@ and3' f a b c = \input ->
                         Left e3 -> Left e3
                 Left e2 -> Left e2
         Left e1 -> Left e1
+-}
 
 removeSpaces :: String -> String
 removeSpaces = dropWhile C.isSpace
