@@ -18,6 +18,7 @@ module Lib2
       Routine(..),
       Exercise(..),
       SOR(..),
+      parse,
       emptyState,
       stateTransition
     ) where
@@ -90,6 +91,9 @@ instance Show State where
         listPlans :: [Plan] -> String
         listPlans = unlines . zipWith (\i plan -> show i ++ ". " ++ show plan) [1..]
 
+parse :: Parser a -> String -> (Either String a, String)
+parse parser = T.runState (runExceptT parser)
+
 parseQuery :: String -> Either String Query
 parseQuery input = 
     case T.evalState (runExceptT (parseList `orElse` parseMerge `orElse` parseOrder)) input of
@@ -126,7 +130,7 @@ parseOrder = do
                     lift $ T.put (dropWhile C.isDigit rest)
                     return (Delete idx)
                 Nothing -> throwE "Invalid index for Delete"
-        _ -> throwE "Expected 'Add <plan>' or 'Delete <number>'"
+        _ -> throwE ("("++ input++"Expected 'Add <plan>' or 'Delete <number>')")
 
 parseMerge :: Parser Query
 parseMerge = do

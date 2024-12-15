@@ -17,7 +17,8 @@ module Lib3
     renderStatements,
     renderQuery,
     Statements(..),
-    Command(..)
+    Command(..),
+    renderPlan
     ) where
 
 import Control.Concurrent ( Chan, readChan, writeChan, newChan )
