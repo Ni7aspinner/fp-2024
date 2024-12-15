@@ -56,7 +56,6 @@ data SOR = SOR String String Char
 
 type Parser a = ExceptT String (T.State String) a
 
-
 instance Show Query where
     show :: Query -> String
     show List = "List"

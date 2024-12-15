@@ -1,0 +1,204 @@
+root@d72414fca6b1:/workspaces/fp-2024# stack run fp2024-four-server
+
+Server is starting
+Setting phasers to stun... (port 3000) (ctrl-c to quit)
+
+//HTTP request per command
+
+//-------------------------------------------------------------
+root@d72414fca6b1:/workspaces/fp-2024# stack exec fp2024-four-client single
+Created Plans:
+1. Monday: 3x2 repetitions of squats;
+   Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;
+
+Created Plans:
+
+Created Plans:
+1. Monday: 3x2 repetitions of squats;
+   Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;
+//-------------------------------------------------------------
+Request was: Add Monday 3x2 squats
+
+cmd: Successfully parsed command: StatementCommand (Single Add Monday: 3x2 repetitions of squats;)
+
+
+Statement executed successfully.
+
+Request was: Add Tuesday 3x2 squats, Superset[3x2 squats, 3x2 squats], 3x2 squats
+
+cmd: Successfully parsed command: StatementCommand (Single Add Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;)
+
+
+Statement executed successfully.
+
+Request was: Merge 1 2
+
+cmd: Successfully parsed command: StatementCommand (Single Merge 1 2)
+
+
+Statement executed successfully.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+
+Request was: Save
+
+cmd: Successfully parsed command: SaveCommand
+
+
+State saving was successful.
+
+Request was: Delete 1
+
+cmd: Successfully parsed command: StatementCommand (Single Delete 1)
+
+
+Statement executed successfully.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+
+Request was: Load
+
+cmd: Successfully parsed command: LoadCommand
+
+
+Loading was successful.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+
+Request was: Delete 1
+
+cmd: Successfully parsed command: StatementCommand (Single Delete 1)
+
+
+Statement executed successfully.
+//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+// "smart" HTTP batcher with one or more commands per HTTP request
+root@d72414fca6b1:/workspaces/fp-2024# stack exec fp2024-four-client batch
+
+Running with HTTP batch or single (smart) request per command:
+
+Created Plans:
+1. Monday: 3x2 repetitions of squats;
+   Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;
+
+
+
+Created Plans:
+
+
+
+Created Plans:
+1. Monday: 3x2 repetitions of squats;
+   Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;
+//-------------------------------------------------------------
+Request was: BEGIN
+Add Monday 3x2 squats
+Add Tuesday 3x2 squats, Superset[3x2 squats, 3x2 squats], 3x2 squats
+Merge 1 2
+END
+
+cmd: Successfully parsed command: StatementCommand (Batch [Add Monday: 3x2 repetitions of squats;,Add Tuesday: 3x2 repetitions of squats, Superset of [3x2 repetitions of squats, 3x2 repetitions of squats], 3x2 repetitions of squats;,Merge 1 2])
+
+
+Statements executed successfully.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+
+Request was: BEGIN
+END
+
+cmd: Successfully parsed command: StatementCommand (Batch [])
+
+
+Statements executed successfully.
+
+Request was: Save
+
+cmd: Successfully parsed command: SaveCommand
+
+
+State saving was successful.
+
+Request was: BEGIN
+Delete 1
+END
+
+cmd: Successfully parsed command: StatementCommand (Batch [Delete 1])
+
+
+Statements executed successfully.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+
+Request was: BEGIN
+END
+
+cmd: Successfully parsed command: StatementCommand (Batch [])
+
+
+Statements executed successfully.
+
+Request was: Load
+
+cmd: Successfully parsed command: LoadCommand
+
+
+Loading was successful.
+
+Request was: BEGIN
+END
+
+cmd: Successfully parsed command: StatementCommand (Batch [])
+
+
+Statements executed successfully.
+
+Request was: List
+
+cmd: Successfully parsed command: StatementCommand (Single List)
+
+
+Listed all plans.
+//||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+//in-memory interpreter for testing.
+root@d72414fca6b1:/workspaces/fp-2024# stack exec fp2024-four-client inMemory
+
+Running with In-Memory interpreter:
+Created Plans:
+1. Monday 3x2 squats;
+   Tuesday 3x2 squats, Superset[3x2 squats, 3x2 squats], 3x2 squats      [active]
+
+State saved to storage.
+
+Created Plans:
+
+State loaded from storage.
+
+Created Plans:
+1. Monday 3x2 squats;
+   Tuesday 3x2 squats, Superset[3x2 squats, 3x2 squats], 3x2 squats      [active]
