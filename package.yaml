@@ -225,6 +225,8 @@ tests:
     - tasty
     - tasty-hunit
     - tasty-quickcheck
+    - transformers
+    - free
   fp2024-doctest:
     main:                Doctest.hs
     source-dirs:         doctest
